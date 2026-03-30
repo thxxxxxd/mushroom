@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { supabase, type Event, type Registration } from "@/lib/supabase";
+import { supabase, type Event, type Registration, ELEMENT_EMOJI } from "@/lib/supabase";
 
 export default function EventPage() {
   const { id } = useParams<{ id: string }>();
@@ -118,7 +118,10 @@ export default function EventPage() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6 mb-5">
         <div className="flex items-start justify-between gap-3 mb-4">
-          <h1 className="text-2xl font-bold text-gray-800">{event.mushroom_name}</h1>
+          <h1 className="text-2xl font-bold text-gray-800">
+            {event.element && <span className="mr-2">{ELEMENT_EMOJI[event.element]}</span>}
+            {event.mushroom_name}
+          </h1>
           {isFull && (
             <span className="shrink-0 text-sm bg-red-100 text-red-600 px-3 py-1 rounded-full font-medium">
               已滿員

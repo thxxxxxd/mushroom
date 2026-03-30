@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, ELEMENT_EMOJI, type Element } from "@/lib/supabase";
 
 type Props = {
   onClose: () => void;
@@ -12,6 +12,7 @@ export default function CreateEventModal({ onClose, onCreated }: Props) {
   const [form, setForm] = useState({
     mushroom_name: "",
     spots_needed: "3",
+    element: "" as Element | "",
     coordinates: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -27,6 +28,7 @@ export default function CreateEventModal({ onClose, onCreated }: Props) {
     const { error: err } = await supabase.from("events").insert({
       mushroom_name: form.mushroom_name,
       spots_needed: parseInt(form.spots_needed),
+      element: form.element || null,
       coordinates: form.coordinates || null,
     });
     setSubmitting(false);
@@ -62,6 +64,26 @@ export default function CreateEventModal({ onClose, onCreated }: Props) {
               onChange={(e) => setForm({ ...form, mushroom_name: e.target.value })}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-400"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">屬性</label>
+            <div className="flex gap-2 flex-wrap">
+              {(Object.entries(ELEMENT_EMOJI) as [Element, string][]).map(([el, emoji]) => (
+                <button
+                  key={el}
+                  type="button"
+                  onClick={() => setForm({ ...form, element: form.element === el ? "" : el })}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${
+                    form.element === el
+                      ? "bg-green-600 text-white border-green-600"
+                      : "bg-white text-gray-600 border-gray-300 hover:border-green-400"
+                  }`}
+                >
+                  {emoji} {el}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>

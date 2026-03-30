@@ -13,7 +13,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-TW" className="h-full">
-      <body className="min-h-full bg-green-50">{children}</body>
+      <body
+        className="min-h-full bg-cover bg-center bg-fixed"
+        style={{ backgroundImage: "url('/background_pic.png')" }}
+      >
+        {children}
+      </body>
     </html>
   );
 }
