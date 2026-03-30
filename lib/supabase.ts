@@ -5,7 +5,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-export type Element = '水' | '水晶' | '火' | '毒' | '電'
+export type Element = '水' | '水晶' | '火' | '毒' | '電' | '活動'
 
 export const ELEMENT_EMOJI: Record<Element, string> = {
   '水': '💧',
@@ -13,6 +13,7 @@ export const ELEMENT_EMOJI: Record<Element, string> = {
   '火': '🔥',
   '毒': '🟣',
   '電': '⚡',
+  '活動': '🎉',
 }
 
 export type Event = {
