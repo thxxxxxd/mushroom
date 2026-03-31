@@ -15,6 +15,7 @@ export default function EventPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [copiedCoords, setCopiedCoords] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
   async function fetchData() {
@@ -171,13 +172,23 @@ export default function EventPage() {
             <div>⚔️ 總戰力 {totalPower.toLocaleString()}</div>
           )}
           {event.coordinates && (
-            <div>
-              📍{" "}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span>📍 {event.coordinates}</span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(event.coordinates!);
+                  setCopiedCoords(true);
+                  setTimeout(() => setCopiedCoords(false), 2000);
+                }}
+                className="text-xs border border-gray-300 text-gray-500 hover:bg-gray-50 px-2 py-0.5 rounded cursor-pointer"
+              >
+                {copiedCoords ? "已複製！" : "複製"}
+              </button>
               <a
                 href={getGoogleMapsUrl(event.coordinates)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-green-600 hover:underline"
+                className="text-green-600 hover:underline text-xs"
               >
                 查看地圖
               </a>
