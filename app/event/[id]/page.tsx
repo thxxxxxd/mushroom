@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { supabase, type Event, type Registration, ELEMENT_EMOJI } from "@/lib/supabase";
+import { supabase, type Event, type Registration, ELEMENT_EMOJI, formatCountdown } from "@/lib/supabase";
 
 export default function EventPage() {
   const { id } = useParams<{ id: string }>();
@@ -11,10 +11,11 @@ export default function EventPage() {
   const [event, setEvent] = useState<Event | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ nickname: "", battle_power: "" });
+  const [form, setForm] = useState({ nickname: "", battle_power: "", days_remaining: "", hours_remaining: "", minutes_remaining: "" });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
 
   async function fetchData() {
     const [{ data: eventData }, { data: regsData }] = await Promise.all([
@@ -35,6 +36,7 @@ export default function EventPage() {
 
     const channel = supabase
       .channel("realtime-event-" + id)
+      .on("postgres_changes", { event: "*", schema: "public", table: "events" }, fetchData)
       .on("postgres_changes", { event: "*", schema: "public", table: "registrations" }, fetchData)
       .subscribe();
 
@@ -42,6 +44,20 @@ export default function EventPage() {
       supabase.removeChannel(channel);
     };
   }, [id]);
+
+  // Tick every 30 seconds for countdown display
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-delete event when expired, redirect home
+  useEffect(() => {
+    if (!event?.expires_at) return;
+    if (new Date(event.expires_at).getTime() <= Date.now()) {
+      supabase.from("events").delete().eq("id", id).then(() => router.push("/"));
+    }
+  }, [now, event]);
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
@@ -54,18 +70,26 @@ export default function EventPage() {
       setError("戰力請輸入正整數");
       return;
     }
+    const days = parseInt(form.days_remaining) || 0;
+    const hours = parseInt(form.hours_remaining) || 0;
+    const mins = parseInt(form.minutes_remaining) || 0;
+    const totalMinutes = days * 24 * 60 + hours * 60 + mins;
+    if (totalMinutes <= 0) {
+      setError("請填寫蘑菇剩餘時間");
+      return;
+    }
+    const expires_at = new Date(Date.now() + totalMinutes * 60 * 1000).toISOString();
     setSubmitting(true);
-    const { error: err } = await supabase.from("registrations").insert({
-      event_id: id,
-      nickname: form.nickname,
-      battle_power: power,
-    });
+    const [{ error: regErr }, { error: eventErr }] = await Promise.all([
+      supabase.from("registrations").insert({ event_id: id, nickname: form.nickname, battle_power: power }),
+      supabase.from("events").update({ expires_at }).eq("id", id),
+    ]);
     setSubmitting(false);
-    if (err) {
+    if (regErr || eventErr) {
       setError("報名失敗，請重試");
       return;
     }
-    setForm({ nickname: "", battle_power: "" });
+    setForm({ nickname: "", battle_power: "", days_remaining: "", hours_remaining: "", minutes_remaining: "" });
     setError("");
     fetchData();
   }
@@ -106,6 +130,10 @@ export default function EventPage() {
   const isFull = registrations.length >= event.spots_needed;
   const remaining = event.spots_needed - registrations.length;
   const totalPower = registrations.reduce((sum, r) => sum + r.battle_power, 0);
+  const countdown = formatCountdown(event.expires_at, now);
+  const isExpiringSoon =
+    event.expires_at &&
+    Math.floor((new Date(event.expires_at).getTime() - now) / 60000) <= 5;
 
   return (
     <main className="max-w-xl mx-auto px-4 py-8">
@@ -134,6 +162,11 @@ export default function EventPage() {
             👥 已報名 {registrations.length} 人
             {!isFull && <span className="text-green-600 ml-2">（還差 {remaining} 人）</span>}
           </div>
+          {countdown && (
+            <div className={`font-medium ${isExpiringSoon ? "text-red-500" : "text-orange-400"}`}>
+              ⏱ 剩 {countdown}
+            </div>
+          )}
           {totalPower > 0 && (
             <div>⚔️ 總戰力 {totalPower.toLocaleString()}</div>
           )}
@@ -219,6 +252,42 @@ export default function EventPage() {
                 onChange={(e) => setForm({ ...form, battle_power: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-400"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                蘑菇剩餘時間 <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="0"
+                  min="0"
+                  value={form.days_remaining}
+                  onChange={(e) => setForm({ ...form, days_remaining: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
+                <span className="text-sm text-gray-500 shrink-0">天</span>
+                <input
+                  type="number"
+                  placeholder="0"
+                  min="0"
+                  max="23"
+                  value={form.hours_remaining}
+                  onChange={(e) => setForm({ ...form, hours_remaining: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
+                <span className="text-sm text-gray-500 shrink-0">時</span>
+                <input
+                  type="number"
+                  placeholder="0"
+                  min="0"
+                  max="59"
+                  value={form.minutes_remaining}
+                  onChange={(e) => setForm({ ...form, minutes_remaining: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
+                <span className="text-sm text-gray-500 shrink-0">分</span>
+              </div>
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <button

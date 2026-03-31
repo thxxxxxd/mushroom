@@ -1,15 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { type Event, ELEMENT_EMOJI } from "@/lib/supabase";
+import { type Event, ELEMENT_EMOJI, formatCountdown } from "@/lib/supabase";
 
 type Props = {
   event: Event & { registration_count: number };
+  now: number;
 };
 
-export default function EventCard({ event }: Props) {
+export default function EventCard({ event, now }: Props) {
   const isFull = event.registration_count >= event.spots_needed;
   const remaining = event.spots_needed - event.registration_count;
+  const countdown = formatCountdown(event.expires_at, now);
+  const isExpiringSoon =
+    event.expires_at &&
+    Math.floor((new Date(event.expires_at).getTime() - now) / 60000) <= 5;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-green-100 p-5 flex items-center justify-between gap-4">
@@ -30,6 +35,11 @@ export default function EventCard({ event }: Props) {
             <span>👥 {event.registration_count} 人已報名</span>
           ) : (
             <span>👥 還差 {remaining} 人</span>
+          )}
+          {countdown && (
+            <span className={isExpiringSoon ? "text-red-500 font-medium" : "text-orange-400"}>
+              ⏱ 剩 {countdown}
+            </span>
           )}
           {event.coordinates && <span>📍 有座標</span>}
         </div>

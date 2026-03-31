@@ -7,7 +7,9 @@ create table events (
   id uuid default gen_random_uuid() primary key,
   mushroom_name text not null,
   spots_needed integer not null,
+  element text,
   coordinates text,
+  expires_at timestamptz,
   created_at timestamptz default now()
 );
 
@@ -25,6 +27,16 @@ alter table registrations enable row level security;
 
 create policy "anyone can read events" on events for select using (true);
 create policy "anyone can insert events" on events for insert with check (true);
+create policy "anyone can delete events" on events for delete using (true);
 
 create policy "anyone can read registrations" on registrations for select using (true);
 create policy "anyone can insert registrations" on registrations for insert with check (true);
+create policy "anyone can delete registrations" on registrations for delete using (true);
+
+-- =============================================
+-- Migration（若已有舊資料表，執行以下語句）：
+-- alter table events add column if not exists expires_at timestamptz;
+-- alter table registrations drop column if exists expires_at;
+-- create policy "anyone can delete registrations" on registrations for delete using (true);
+-- create policy "anyone can delete events" on events for delete using (true);
+-- =============================================

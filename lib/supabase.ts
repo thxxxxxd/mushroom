@@ -22,6 +22,7 @@ export type Event = {
   spots_needed: number
   element: Element | null
   coordinates: string | null
+  expires_at: string | null
   created_at: string
 }
 
@@ -31,4 +32,18 @@ export type Registration = {
   nickname: string
   battle_power: number
   created_at: string
+}
+
+export function formatCountdown(expiresAt: string | null, now: number): string | null {
+  if (!expiresAt) return null;
+  const totalMins = Math.floor((new Date(expiresAt).getTime() - now) / 60000);
+  if (totalMins <= 0) return "即將到期";
+  const days = Math.floor(totalMins / (60 * 24));
+  const hours = Math.floor((totalMins % (60 * 24)) / 60);
+  const mins = totalMins % 60;
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}天`);
+  if (hours > 0) parts.push(`${hours}小時`);
+  if (mins > 0 || parts.length === 0) parts.push(`${mins}分`);
+  return parts.join('');
 }

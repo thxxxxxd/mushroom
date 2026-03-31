@@ -9,6 +9,7 @@ export default function Home() {
   const [events, setEvents] = useState<(Event & { registration_count: number })[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
 
   async function fetchEvents() {
     const { data: eventsData } = await supabase
@@ -50,6 +51,21 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const expired = events.filter(
+      (e) => e.expires_at && new Date(e.expires_at).getTime() <= Date.now()
+    );
+    for (const e of expired) {
+      supabase.from("events").delete().eq("id", e.id);
+    }
+  }, [now, events]);
+
+
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
@@ -75,7 +91,7 @@ export default function Home() {
       ) : (
         <div className="flex flex-col gap-4">
           {events.map((event) => (
-            <EventCard key={event.id} event={event} />
+            <EventCard key={event.id} event={event} now={now} />
           ))}
         </div>
       )}
