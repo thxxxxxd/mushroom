@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase, type Event, type Registration, ELEMENT_EMOJI, parseElements, formatCountdown } from "@/lib/supabase";
+import { generateGpx, downloadFile, type GpxFormat } from "@/lib/gpx";
 
 const DELETE_PIN = "1203";
 
@@ -22,6 +23,7 @@ export default function EventPage() {
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
+  const [gpxFormat, setGpxFormat] = useState<GpxFormat>("standard");
 
   async function fetchData() {
     const [{ data: eventData }, { data: regsData }] = await Promise.all([
@@ -158,7 +160,7 @@ export default function EventPage() {
   return (
     <main className="max-w-xl mx-auto px-4 py-8">
       <button
-        onClick={() => router.push("/")}
+        onClick={() => router.push("/board")}
         className="text-green-600 hover:text-green-800 text-sm mb-6 flex items-center gap-1 cursor-pointer"
       >
         ← 回看板
@@ -193,26 +195,48 @@ export default function EventPage() {
             <div>⚔️ 總戰力 {totalPower.toLocaleString()}</div>
           )}
           {event.coordinates && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span>📍 {event.coordinates}</span>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(event.coordinates!);
-                  setCopiedCoords(true);
-                  setTimeout(() => setCopiedCoords(false), 2000);
-                }}
-                className="text-xs border border-gray-300 text-gray-500 hover:bg-gray-50 px-2 py-0.5 rounded cursor-pointer"
-              >
-                {copiedCoords ? "已複製！" : "複製"}
-              </button>
-              <a
-                href={getGoogleMapsUrl(event.coordinates)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-green-600 hover:underline text-xs"
-              >
-                查看地圖
-              </a>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span>📍 {event.coordinates}</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(event.coordinates!);
+                    setCopiedCoords(true);
+                    setTimeout(() => setCopiedCoords(false), 2000);
+                  }}
+                  className="text-xs border border-gray-300 text-gray-500 hover:bg-gray-50 px-2 py-0.5 rounded cursor-pointer"
+                >
+                  {copiedCoords ? "已複製！" : "複製"}
+                </button>
+                <a
+                  href={getGoogleMapsUrl(event.coordinates)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-green-600 hover:underline text-xs"
+                >
+                  查看地圖
+                </a>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <select
+                  value={gpxFormat}
+                  onChange={(e) => setGpxFormat(e.target.value as GpxFormat)}
+                  className="text-xs border border-gray-300 rounded px-2 py-0.5 text-gray-600 cursor-pointer"
+                >
+                  <option value="standard">Standard GPX</option>
+                  <option value="ghost">魅影</option>
+                  <option value="mocpogo">MocPOGO</option>
+                </select>
+                <button
+                  onClick={() => {
+                    const result = generateGpx(event.coordinates!, gpxFormat);
+                    if (result) downloadFile(result.filename, result.content, result.mime);
+                  }}
+                  className="text-xs border border-blue-300 text-blue-500 hover:bg-blue-50 px-2 py-0.5 rounded cursor-pointer"
+                >
+                  ⬇ 下載 GPX
+                </button>
+              </div>
             </div>
           )}
         </div>
