@@ -19,11 +19,21 @@ export default function EventCard({ event, now }: Props) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-green-100 p-5 flex items-center justify-between gap-4">
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
           {event.element && (
             <span className="text-xl">{ELEMENT_EMOJI[event.element]}</span>
           )}
           <span className="text-lg font-bold text-gray-800">{event.mushroom_name}</span>
+          {event.element && (
+            <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-medium">
+              {event.element}
+            </span>
+          )}
+          {remaining === 5 && (
+            <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">
+              蘑菇未開
+            </span>
+          )}
           {isFull && (
             <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
               已滿
