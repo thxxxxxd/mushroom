@@ -51,9 +51,6 @@ export function formatCountdown(expiresAt: string | null, now: number): string |
   const days = Math.floor(totalMins / (60 * 24));
   const hours = Math.floor((totalMins % (60 * 24)) / 60);
   const mins = totalMins % 60;
-  const parts: string[] = [];
-  if (days > 0) parts.push(`${days}天`);
-  if (hours > 0) parts.push(`${hours}小時`);
-  if (mins > 0 || parts.length === 0) parts.push(`${mins}分`);
-  return parts.join('');
+  if (days > 0) return `${days}天${hours}小時`;
+  return `${hours}小時${mins}分`;
 }
