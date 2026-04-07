@@ -11,6 +11,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [filterElement, setFilterElement] = useState<Element | null>(null);
+  const [filterStatus, setFilterStatus] = useState<"未滿" | "蘑菇未開" | null>(null);
   const [sortByExpiry, setSortByExpiry] = useState(false);
 
   async function fetchEvents() {
@@ -94,6 +95,19 @@ export default function Home() {
         >
           ⏱ 哪個快死了?
         </button>
+        {(["未滿", "蘑菇未開"] as const).map((s) => (
+          <button
+            key={s}
+            onClick={() => setFilterStatus(filterStatus === s ? null : s)}
+            className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors cursor-pointer ${
+              filterStatus === s
+                ? "bg-green-600 text-white border-green-600"
+                : "bg-white text-gray-600 border-gray-300 hover:border-green-400"
+            }`}
+          >
+            {s}
+          </button>
+        ))}
       </div>
 
       <div className="flex gap-2 flex-wrap mb-5">
@@ -123,6 +137,13 @@ export default function Home() {
         <div className="flex flex-col gap-4">
           {events
             .filter((e) => !filterElement || parseElements(e.element).includes(filterElement))
+            .filter((e) => {
+              if (!filterStatus) return true;
+              const remaining = e.spots_needed - e.registration_count;
+              if (filterStatus === "未滿") return e.registration_count < e.spots_needed;
+              if (filterStatus === "蘑菇未開") return remaining === 5;
+              return true;
+            })
             .sort((a, b) => {
               if (!sortByExpiry) return 0;
               const ta = a.expires_at ? new Date(a.expires_at).getTime() : Infinity;
