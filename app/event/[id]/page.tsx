@@ -229,8 +229,8 @@ export default function EventPage() {
                 </select>
                 <button
                   onClick={() => {
-                    const result = generateGpx(event.coordinates!, gpxFormat);
-                    if (result) downloadFile(result.filename, result.content, result.mime);
+                    const results = generateGpx(event.coordinates!, { format: gpxFormat, mode: "straight", z: 0.0003, filename: "route", closedRoute: false });
+                    if (results) results.forEach(r => downloadFile(r.filename, r.content, r.mime));
                   }}
                   className="text-xs border border-blue-300 text-blue-500 hover:bg-blue-50 px-2 py-0.5 rounded cursor-pointer"
                 >
