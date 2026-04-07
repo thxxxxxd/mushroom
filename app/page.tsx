@@ -11,6 +11,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [filterElement, setFilterElement] = useState<Element | null>(null);
+  const [sortByExpiry, setSortByExpiry] = useState(false);
 
   async function fetchEvents() {
     const { data: eventsData } = await supabase
@@ -82,6 +83,19 @@ export default function Home() {
         </button>
       </div>
 
+      <div className="flex gap-2 flex-wrap mb-3">
+        <button
+          onClick={() => setSortByExpiry((v) => !v)}
+          className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors cursor-pointer ${
+            sortByExpiry
+              ? "bg-orange-500 text-white border-orange-500"
+              : "bg-white text-gray-600 border-gray-300 hover:border-orange-400"
+          }`}
+        >
+          ⏱ 哪個快死了?
+        </button>
+      </div>
+
       <div className="flex gap-2 flex-wrap mb-5">
         {(Object.entries(ELEMENT_EMOJI) as [Element, string][]).map(([el, emoji]) => (
           <button
@@ -109,6 +123,12 @@ export default function Home() {
         <div className="flex flex-col gap-4">
           {events
             .filter((e) => !filterElement || parseElements(e.element).includes(filterElement))
+            .sort((a, b) => {
+              if (!sortByExpiry) return 0;
+              const ta = a.expires_at ? new Date(a.expires_at).getTime() : Infinity;
+              const tb = b.expires_at ? new Date(b.expires_at).getTime() : Infinity;
+              return ta - tb;
+            })
             .map((event) => (
               <EventCard key={event.id} event={event} now={now} />
             ))}
