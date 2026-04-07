@@ -60,10 +60,10 @@ export default function EventCard({ event, now }: Props) {
         className={`shrink-0 px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
           isFull
             ? "bg-gray-100 text-gray-500 hover:bg-gray-200"
-            : "bg-green-600 text-white hover:bg-green-700"
+            : "bg-white hover:bg-gray-50"
         }`}
       >
-        {isFull ? "查看" : "報名"}
+        {isFull ? "查看" : <img src="/plus_1.png" alt="報名" className="w-9 h-9" />}
       </Link>
     </div>
   );
