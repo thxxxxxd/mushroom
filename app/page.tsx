@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase, type Event } from "@/lib/supabase";
+import { supabase, type Event, type Element, ELEMENT_EMOJI } from "@/lib/supabase";
 import CreateEventModal from "@/components/CreateEventModal";
 import EventCard from "@/components/EventCard";
 
@@ -10,6 +10,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const [filterElement, setFilterElement] = useState<Element | null>(null);
 
   async function fetchEvents() {
     const { data: eventsData } = await supabase
@@ -81,6 +82,22 @@ export default function Home() {
         </button>
       </div>
 
+      <div className="flex gap-2 flex-wrap mb-5">
+        {(Object.entries(ELEMENT_EMOJI) as [Element, string][]).map(([el, emoji]) => (
+          <button
+            key={el}
+            onClick={() => setFilterElement(filterElement === el ? null : el)}
+            className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors cursor-pointer ${
+              filterElement === el
+                ? "bg-green-600 text-white border-green-600"
+                : "bg-white text-gray-600 border-gray-300 hover:border-green-400"
+            }`}
+          >
+            {emoji} {el}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="text-center py-16 text-green-600">載入中...</div>
       ) : events.length === 0 ? (
@@ -90,9 +107,11 @@ export default function Home() {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} now={now} />
-          ))}
+          {events
+            .filter((e) => !filterElement || e.element === filterElement)
+            .map((event) => (
+              <EventCard key={event.id} event={event} now={now} />
+            ))}
         </div>
       )}
 
