@@ -25,11 +25,13 @@ export default function CreateEventModal({ onClose, onCreated }: Props) {
       return;
     }
     setSubmitting(true);
+    const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const { error: err } = await supabase.from("events").insert({
       mushroom_name: form.mushroom_name,
       spots_needed: parseInt(form.spots_needed),
       element: form.element || null,
       coordinates: form.coordinates || null,
+      expires_at,
     });
     setSubmitting(false);
     if (err) {
