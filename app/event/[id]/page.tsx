@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { supabase, type Event, type Registration, ELEMENT_EMOJI, formatCountdown } from "@/lib/supabase";
+import { supabase, type Event, type Registration, ELEMENT_EMOJI, parseElements, formatCountdown } from "@/lib/supabase";
 
 export default function EventPage() {
   const { id } = useParams<{ id: string }>();
@@ -148,7 +148,9 @@ export default function EventPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6 mb-5">
         <div className="flex items-start justify-between gap-3 mb-4">
           <h1 className="text-2xl font-bold text-gray-800">
-            {event.element && <span className="mr-2">{ELEMENT_EMOJI[event.element]}</span>}
+            {parseElements(event.element)[0] && (
+              <span className="mr-2">{ELEMENT_EMOJI[parseElements(event.element)[0]]}</span>
+            )}
             {event.mushroom_name}
           </h1>
           {isFull && (

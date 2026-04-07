@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase, ELEMENT_EMOJI, type Element } from "@/lib/supabase";
+import { supabase, ELEMENT_EMOJI, BASE_ELEMENTS, EXTRA_ELEMENTS, type Element } from "@/lib/supabase";
 
 type Props = {
   onClose: () => void;
@@ -12,24 +12,35 @@ export default function CreateEventModal({ onClose, onCreated }: Props) {
   const [form, setForm] = useState({
     mushroom_name: "",
     spots_needed: "5",
-    element: "" as Element | "",
     coordinates: "",
   });
+  const [baseElement, setBaseElement] = useState<Element | "">("");
+  const [extras, setExtras] = useState<Set<Element>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  function toggleExtra(el: Element) {
+    setExtras((prev) => {
+      const next = new Set(prev);
+      if (next.has(el)) next.delete(el);
+      else next.add(el);
+      return next;
+    });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.mushroom_name || !form.spots_needed || !form.element) {
+    if (!form.mushroom_name || !form.spots_needed || !baseElement) {
       setError("請填寫必填欄位");
       return;
     }
+    const elementValue = [baseElement, ...extras].join("|");
     setSubmitting(true);
     const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const { error: err } = await supabase.from("events").insert({
       mushroom_name: form.mushroom_name,
       spots_needed: parseInt(form.spots_needed),
-      element: form.element || null,
+      element: elementValue,
       coordinates: form.coordinates || null,
       expires_at,
     });
@@ -70,21 +81,38 @@ export default function CreateEventModal({ onClose, onCreated }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              屬性 <span className="text-red-500">*</span>
+              蘑菇種類 <span className="text-red-500">*</span>
             </label>
-            <div className="flex gap-2 flex-wrap">
-              {(Object.entries(ELEMENT_EMOJI) as [Element, string][]).map(([el, emoji]) => (
+            <div className="flex gap-2 flex-wrap mb-2">
+              {BASE_ELEMENTS.map((el) => (
                 <button
                   key={el}
                   type="button"
-                  onClick={() => setForm({ ...form, element: form.element === el ? "" : el })}
+                  onClick={() => setBaseElement(baseElement === el ? "" : el)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${
-                    form.element === el
+                    baseElement === el
                       ? "bg-green-600 text-white border-green-600"
                       : "bg-white text-gray-600 border-gray-300 hover:border-green-400"
                   }`}
                 >
-                  {emoji} {el}
+                  {ELEMENT_EMOJI[el]} {el}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-700 font-medium mt-1 mb-2">屬性</p>
+            <div className="flex gap-2 flex-wrap">
+              {EXTRA_ELEMENTS.map((el) => (
+                <button
+                  key={el}
+                  type="button"
+                  onClick={() => toggleExtra(el)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${
+                    extras.has(el)
+                      ? "bg-blue-500 text-white border-blue-500"
+                      : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+                  }`}
+                >
+                  {ELEMENT_EMOJI[el]} {el}
                 </button>
               ))}
             </div>

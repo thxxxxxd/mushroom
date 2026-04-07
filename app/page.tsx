@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase, type Event, type Element, ELEMENT_EMOJI } from "@/lib/supabase";
+import { supabase, type Event, type Element, ELEMENT_EMOJI, parseElements } from "@/lib/supabase";
 import CreateEventModal from "@/components/CreateEventModal";
 import EventCard from "@/components/EventCard";
 
@@ -108,7 +108,7 @@ export default function Home() {
       ) : (
         <div className="flex flex-col gap-4">
           {events
-            .filter((e) => !filterElement || e.element === filterElement)
+            .filter((e) => !filterElement || parseElements(e.element).includes(filterElement))
             .map((event) => (
               <EventCard key={event.id} event={event} now={now} />
             ))}
