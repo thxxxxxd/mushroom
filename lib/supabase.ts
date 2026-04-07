@@ -11,11 +11,11 @@ export const ELEMENT_EMOJI: Record<Element, string> = {
   '水': '💧',
   '水晶': '💎',
   '火': '🔥',
-  '毒': '🟣',
+  '毒': '💀',
   '電': '⚡',
   '活動': '🎉',
   '泡菜菇': '🥬',
-  '美片': '🎬',
+  '美片': '🌸',
 }
 
 export const BASE_ELEMENTS: Element[] = ['水', '水晶', '火', '毒', '電', '活動']
