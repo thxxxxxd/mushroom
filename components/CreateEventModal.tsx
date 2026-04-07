@@ -11,7 +11,7 @@ type Props = {
 export default function CreateEventModal({ onClose, onCreated }: Props) {
   const [form, setForm] = useState({
     mushroom_name: "",
-    spots_needed: "3",
+    spots_needed: "5",
     element: "" as Element | "",
     coordinates: "",
   });
@@ -20,7 +20,7 @@ export default function CreateEventModal({ onClose, onCreated }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.mushroom_name || !form.spots_needed) {
+    if (!form.mushroom_name || !form.spots_needed || !form.element) {
       setError("請填寫必填欄位");
       return;
     }
@@ -69,7 +69,9 @@ export default function CreateEventModal({ onClose, onCreated }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">屬性</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              屬性 <span className="text-red-500">*</span>
+            </label>
             <div className="flex gap-2 flex-wrap">
               {(Object.entries(ELEMENT_EMOJI) as [Element, string][]).map(([el, emoji]) => (
                 <button
