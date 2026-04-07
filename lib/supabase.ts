@@ -14,7 +14,7 @@ export const ELEMENT_EMOJI: Record<Element, string> = {
   '毒': '💀',
   '電': '⚡',
   '活動': '🎉',
-  '泡菜菇': '🥬',
+  '泡菜菇': '🇰🇷',
   '美片': '🌸',
 }
 

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase, type Event, type Registration, ELEMENT_EMOJI, parseElements, formatCountdown } from "@/lib/supabase";
 
+const DELETE_PIN = "1203";
+
 export default function EventPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -17,6 +19,9 @@ export default function EventPage() {
   const [copied, setCopied] = useState(false);
   const [copiedCoords, setCopiedCoords] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState(false);
 
   async function fetchData() {
     const [{ data: eventData }, { data: regsData }] = await Promise.all([
@@ -46,13 +51,11 @@ export default function EventPage() {
     };
   }, [id]);
 
-  // Tick every 30 seconds for countdown display
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-delete event when expired, redirect home
   useEffect(() => {
     if (!event?.expires_at) return;
     if (new Date(event.expires_at).getTime() <= Date.now()) {
@@ -95,14 +98,30 @@ export default function EventPage() {
     fetchData();
   }
 
+  async function handleCancelRegistration(regId: string, nickname: string) {
+    if (!confirm(`確定要取消「${nickname}」的報名嗎？`)) return;
+    await supabase.from("registrations").delete().eq("id", regId);
+    fetchData();
+  }
+
   function copyLink() {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
-  async function handleDelete() {
-    if (!confirm(`確定要刪除「${event?.mushroom_name}」蘑菇團嗎？`)) return;
+  function handleDelete() {
+    setShowPinModal(true);
+    setPinInput("");
+    setPinError(false);
+  }
+
+  async function confirmDelete() {
+    if (pinInput !== DELETE_PIN) {
+      setPinError(true);
+      return;
+    }
+    setShowPinModal(false);
     await supabase.from("events").delete().eq("id", id);
     router.push("/");
   }
@@ -229,9 +248,18 @@ export default function EventPage() {
                   <span className="text-xs text-gray-400 w-5">{i + 1}</span>
                   <span className="font-medium text-gray-800">{r.nickname}</span>
                 </div>
-                <span className="text-sm text-gray-500">
-                  ⚔️ {r.battle_power.toLocaleString()}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-500">
+                    ⚔️ {r.battle_power.toLocaleString()}
+                  </span>
+                  <button
+                    onClick={() => handleCancelRegistration(r.id, r.nickname)}
+                    className="text-xs text-gray-300 hover:text-red-400 transition-colors cursor-pointer"
+                    title="取消報名"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -311,6 +339,40 @@ export default function EventPage() {
               {submitting ? "報名中..." : "確認報名"}
             </button>
           </form>
+        </div>
+      )}
+
+      {showPinModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <h2 className="text-lg font-bold text-gray-800 mb-1">要確欸？</h2>
+            <p className="text-sm text-gray-500 mb-4">請輸入 PIN 碼確認刪除</p>
+            <input
+              type="password"
+              inputMode="numeric"
+              placeholder="PIN 碼"
+              value={pinInput}
+              onChange={(e) => { setPinInput(e.target.value); setPinError(false); }}
+              onKeyDown={(e) => e.key === "Enter" && confirmDelete()}
+              autoFocus
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400 mb-2"
+            />
+            {pinError && <p className="text-sm text-red-500 mb-2">PIN 碼錯誤</p>}
+            <div className="flex gap-3 mt-2">
+              <button
+                onClick={() => setShowPinModal(false)}
+                className="flex-1 border border-gray-300 text-gray-600 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
+              >
+                確認刪除
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </main>
